@@ -1,0 +1,36 @@
+{
+  "name": "devpilot",
+  "version": "0.1.0",
+  "description": "A small, dependency-free CLI for analyzing project paths.",
+  "type": "module",
+  "bin": {
+    "devpilot": "./bin/devpilot.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check bin/devpilot.js && node --check src/cli.js && node --check src/commands/analyze.js && node --check src/help.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "cli",
+    "developer-tools",
+    "project-analysis"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/77micz/devpilot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/77micz/devpilot/issues"
+  },
+  "homepage": "https://github.com/77micz/devpilot#readme",
+  "license": "MIT"
+}
