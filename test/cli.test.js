@@ -1,3 +1,6 @@
+// 这些测试验证 CLI 的“对外行为”：输出到哪、退出码是多少。
+// 测试不依赖真实项目目录，所有示例文件都放在系统临时目录里。
+
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -8,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 
 import { run, VERSION } from '../src/cli.js';
 
+// 每个测试共用一套临时目录和示例文件。
+// mkdtempSync 会创建一个带随机后缀的目录，避免不同测试互相覆盖。
 const tempDir = mkdtempSync(join(tmpdir(), 'devpilot-test-'));
 const projectDir = join(tempDir, 'project');
 const filePath = join(tempDir, 'notes.txt');
@@ -17,9 +22,12 @@ const packagePath = fileURLToPath(new URL('../package.json', import.meta.url));
 mkdirSync(projectDir);
 writeFileSync(filePath, 'hello\n');
 
+// 所有测试跑完后，删除临时目录，保持机器干净。
 after(() => {
   rmSync(tempDir, { recursive: true, force: true });
 });
+
+// ---------- 基础命令：help 和 version ----------
 
 test('--help prints usage and exits 0', () => {
   const result = run(['--help']);
@@ -47,6 +55,8 @@ test('help analyze prints command-specific help', () => {
   assert.match(result.stdout, /devpilot analyze <path>/);
   assert.equal(result.stderr, '');
 });
+
+// ---------- analyze 的正常路径 ----------
 
 test('analyze prints an absolute path for a directory', () => {
   const result = run(['analyze', projectDir]);
@@ -79,6 +89,8 @@ test('analyze supports paths beginning with a dash after --', () => {
   assert.equal(result.code, 0);
   assert.equal(result.stdout, `${dashPath}\n`);
 });
+
+// ---------- analyze 的错误处理 ----------
 
 test('analyze rejects a missing path with exit code 2', () => {
   const result = run(['analyze']);
@@ -119,6 +131,8 @@ test('an unknown command exits with code 2', () => {
   assert.match(result.stderr, /devpilot --help/);
 });
 
+// ---------- 其他全局错误 ----------
+
 test('no arguments exits with code 2', () => {
   const result = run([]);
 
@@ -126,6 +140,10 @@ test('no arguments exits with code 2', () => {
   assert.match(result.stderr, /missing command/);
 });
 
+// ---------- 真正的可执行入口 ----------
+
+// 前面的测试直接调用 run()；这里启动一个真正的 Node 进程，
+// 验证 bin/devpilot.js 这层包装也能正确传参、输出和设置退出码。
 test('the executable wrapper forwards output and exit codes', () => {
   const result = spawnSync(process.execPath, [binPath, '--version'], {
     encoding: 'utf8',
